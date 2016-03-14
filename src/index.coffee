@@ -1,6 +1,9 @@
 Rx = require 'rx'
+Cycle = require '@cycle/core'
 
-# Login (functional)
+
+# Logic (functional)
+# ----
 main = (sources) ->
   click$ = sources.DOM
 
@@ -10,37 +13,63 @@ main = (sources) ->
       .startWith(null)
       .flatMapLatest () ->
         Rx.Observable.timer(0, 1000).map (i) ->
-          "Seconds elapsed #{i}"
+          tagName: 'H1'
+          children: [
+            {
+              tagName: 'SPAN'
+              children: [
+                "Seconds elapsed #{i}"
+              ]
+            }
+          ]
     Log:
       Rx.Observable.timer(0, 2000).map (i) ->
         2 * i
 
+
+
 # Effects (imperative)
-DOMDriver = (text$) ->
-  text$.subscribe (text) ->
+# ----
+DOMDriver = (obj$) ->
+  createElement = (obj) ->
+    element = document.createElement(obj.tagName)
+    obj
+    .children
+    .filter (child) ->
+      typeof child == 'object'
+    .map(createElement)
+    .forEach (child) ->
+      element.appendChild child
+
+    obj
+    .children
+    .filter (child) ->
+      typeof child == 'string'
+    .forEach (child) ->
+      element.innerHTML += child
+
+    element
+
+  obj$.subscribe (obj) ->
     container = document.querySelector("#app")
-    container.textContent = text
+    container.innerHTML = ''
+    element = createElement(obj)
+    container.appendChild(element)
 
   Rx.Observable.fromEvent(document, 'click')
+
 
 consoleLogDriver = (msg$) ->
   msg$.subscribe (msg) ->
     console.log msg
 
-run = (mainFn, drivers) ->
-  proxySources = {}
-  Object.keys(drivers).forEach (key) ->
-    proxySources[key] = new Rx.Subject()
-
-  sinks = mainFn(proxySources)
-
-  Object.keys(drivers).forEach (key) ->
-    source = drivers[key](sinks[key])
-    source.subscribe (x) ->
-      proxySources[key].onNext(x)
 
 drivers =
   DOM: DOMDriver
   Log: consoleLogDriver
 
-run(main, drivers)
+
+
+# Wiring
+# ----
+Cycle.run(main, drivers)
