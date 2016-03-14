@@ -5,11 +5,11 @@ Cycle = require '@cycle/core'
 # Logic (functional)
 # ----
 main = (sources) ->
-  click$ = sources.DOM
+  mouseover$ = sources.DOM.selectEvents('span', 'mouseover')
 
   sinks =
     DOM:
-      click$
+      mouseover$
       .startWith(null)
       .flatMapLatest () ->
         Rx.Observable.timer(0, 1000).map (i) ->
@@ -56,8 +56,12 @@ DOMDriver = (obj$) ->
     element = createElement(obj)
     container.appendChild(element)
 
-  Rx.Observable.fromEvent(document, 'click')
 
+  DOMSource =
+    selectEvents: (tagName, eventType) ->
+      Rx.Observable.fromEvent(document, eventType)
+      .filter (ev) ->
+        ev.target.tagName == tagName.toUpperCase()
 
 consoleLogDriver = (msg$) ->
   msg$.subscribe (msg) ->
