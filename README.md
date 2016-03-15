@@ -1,4 +1,4 @@
-# Leaning Cycle.js Fundamentals
+# Learning Cycle.js Fundamentals
 
 Just a playground for learning the Cycle.js fundamentals from egghead.io:
 https://egghead.io/series/cycle-js-fundamentals
