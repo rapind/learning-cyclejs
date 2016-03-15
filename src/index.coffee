@@ -1,21 +1,14 @@
 Rx = require 'rx'
 Cycle = require '@cycle/core'
+CycleDOM = require '@cycle/dom'
 
+{ h, h1, span, makeDOMDriver } = CycleDOM
 
-h = (tagName, children) ->
-  tagName: tagName
-  children: children
-
-h1 = (children) ->
-  h('H1', children)
-
-span = (children) ->
-  h('SPAN', children)
 
 # Logic (functional)
 # ----
 main = (sources) ->
-  mouseover$ = sources.DOM.selectEvents('span', 'mouseover')
+  mouseover$ = sources.DOM.select('span').events('mouseover')
 
   sinks =
     DOM:
@@ -23,11 +16,11 @@ main = (sources) ->
       .startWith(null)
       .flatMapLatest () ->
         Rx.Observable.timer(0, 1000).map (i) ->
-          h1 [
-            span [
+          h1
+            style:
+              backgroundColor: 'red'
+            span {},
               "Seconds elapsed #{i}"
-            ]
-          ]
     Log:
       Rx.Observable.timer(0, 2000).map (i) ->
         2 * i
@@ -36,38 +29,6 @@ main = (sources) ->
 
 # Effects (imperative)
 # ----
-DOMDriver = (obj$) ->
-  createElement = (obj) ->
-    element = document.createElement(obj.tagName)
-    obj
-    .children
-    .filter (child) ->
-      typeof child == 'object'
-    .map(createElement)
-    .forEach (child) ->
-      element.appendChild child
-
-    obj
-    .children
-    .filter (child) ->
-      typeof child == 'string'
-    .forEach (child) ->
-      element.innerHTML += child
-
-    element
-
-  obj$.subscribe (obj) ->
-    container = document.querySelector("#app")
-    container.innerHTML = ''
-    element = createElement(obj)
-    container.appendChild(element)
-
-
-  DOMSource =
-    selectEvents: (tagName, eventType) ->
-      Rx.Observable.fromEvent(document, eventType)
-      .filter (ev) ->
-        ev.target.tagName == tagName.toUpperCase()
 
 consoleLogDriver = (msg$) ->
   msg$.subscribe (msg) ->
@@ -75,7 +36,7 @@ consoleLogDriver = (msg$) ->
 
 
 drivers =
-  DOM: DOMDriver
+  DOM: makeDOMDriver('#app')
   Log: consoleLogDriver
 
 
