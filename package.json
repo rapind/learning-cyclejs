@@ -25,6 +25,7 @@
   "dependencies": {
     "@cycle/core": "^6.0.3",
     "@cycle/dom": "^9.2.1",
+    "@cycle/http": "^8.2.2",
     "rx": "^4.1.0"
   }
 }

@@ -1,44 +1,62 @@
 import Rx from 'rx'
 import Cycle from '@cycle/core'
 import CycleDOM from '@cycle/dom'
+import CycleHTTPDriver from '@cycle/http'
 
 const { makeDOMDriver } = CycleDOM
+const { makeHTTPDriver } = CycleHTTPDriver
 
 // Logic (functional)
 // ----
+//
+// DOM read effect: button clicked
+// HTTP write effect: request sent
+// HTTP read effect: response received
+// DOM write effect: data displayed
 function main (sources) {
-  const { div, button, p, label } = CycleDOM
+  const { div, button, h1, h4, a } = CycleDOM
 
-  const decrementClick$ = sources.DOM
-    .select('.decrement').events('click')
+  const clickEvent$ = sources.DOM
+    .select('.get-first').events('click')
 
-  const incrementClick$ = sources.DOM
-    .select('.increment').events('click')
+  const url = 'http://jsonplaceholder.typicode.com/users/1'
+  const request$ = clickEvent$.map(() => {
+    return {
+      url: url,
+      method: 'GET'
+    }
+  })
 
-  const decrementAction$ = decrementClick$.map(ev => -1)
-  const incrementAction$ = incrementClick$.map(ev => +1)
+  const response$$ = sources.HTTP
+    .filter(response$ =>
+      response$.request.url === url
+    )
 
-  const number$ = Rx.Observable.of(0)
-    .merge(decrementAction$).merge(incrementAction$)
-    .scan((prev, curr) => prev + curr)
+  const response$ = response$$.switch()
+  const firstUser$ = response$.map(response =>
+    response.body
+  ).startWith(null)
 
   return {
-    DOM: number$.map(number =>
+    DOM: firstUser$.map(firstUser =>
       div([
-        button('.decrement', 'Decrement'),
-        button('.increment', 'Increment'),
-        p([
-          label(String(number))
+        button('.get-first', 'Get first user'),
+        firstUser == null ? null : div('.user-details', [
+          h1('.user-name', firstUser.name),
+          h4('.user-email', firstUser.email),
+          a('.user-website', { href: firstUser.website }, firstUser.website)
         ])
       ])
-    )
+    ),
+    HTTP: request$
   }
 }
 
 // Effects (imperative)
 // ----
 const drivers = {
-  DOM: makeDOMDriver('#app')
+  DOM: makeDOMDriver('#app'),
+  HTTP: makeHTTPDriver()
 }
 
 // Wiring
