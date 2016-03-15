@@ -1,23 +1,30 @@
 {
   "name": "learning-cyclejs",
   "version": "1.0.0",
-  "description": "Working through the Cycle.js Fundamentals from egghead.io",
-  "main": "webpack.config.js",
-  "dependencies": {},
+  "description": "Learning Cycle.js Fundamentals",
+  "main": "./src/index.js",
+  "repository": "git@github.com:rapind/learning-cyclejs.git",
+  "scripts": {
+    "start": "webpack-dev-server --port 3000",
+    "prod": "webpack"
+  },
+  "author": "Dave Rapin",
+  "license": "ISC",
   "devDependencies": {
-    "@cycle/core": "^6.0.3",
-    "@cycle/dom": "^9.2.1",
-    "coffee-loader": "^0.7.2",
-    "coffee-script": "^1.10.0",
-    "coffeelint": "^1.15.0",
-    "coffeelint-loader": "^0.1.1",
-    "rx": "^4.1.0",
-    "webpack": "^1.12.14",
+    "babel-core": "^6.4.0",
+    "babel-loader": "^6.2.1",
+    "babel-preset-es2015": "^6.3.13",
+    "css-loader": "^0.23.1",
+    "standard": "^5.4.1",
+    "standard-loader": "^2.0.0",
+    "style-loader": "^0.13.0",
+    "stylus-loader": "^1.5.1",
+    "webpack": "^1.12.11",
     "webpack-dev-server": "^1.14.1"
   },
-  "scripts": {
-    "start": "webpack-dev-server --port 3000"
-  },
-  "author": "Dave Rapin <dave@rapin.com>",
-  "license": "ISC"
+  "dependencies": {
+    "@cycle/core": "^6.0.3",
+    "@cycle/dom": "^9.2.1",
+    "rx": "^4.1.0"
+  }
 }
