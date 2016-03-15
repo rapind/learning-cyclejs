@@ -2,6 +2,16 @@ Rx = require 'rx'
 Cycle = require '@cycle/core'
 
 
+h = (tagName, children) ->
+  tagName: tagName
+  children: children
+
+h1 = (children) ->
+  h('H1', children)
+
+span = (children) ->
+  h('SPAN', children)
+
 # Logic (functional)
 # ----
 main = (sources) ->
@@ -13,14 +23,10 @@ main = (sources) ->
       .startWith(null)
       .flatMapLatest () ->
         Rx.Observable.timer(0, 1000).map (i) ->
-          tagName: 'H1'
-          children: [
-            {
-              tagName: 'SPAN'
-              children: [
-                "Seconds elapsed #{i}"
-              ]
-            }
+          h1 [
+            span [
+              "Seconds elapsed #{i}"
+            ]
           ]
     Log:
       Rx.Observable.timer(0, 2000).map (i) ->
