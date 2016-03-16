@@ -46,7 +46,7 @@ function view (state$) {
   )
 }
 
-function main (sources) {
+function LabeledSlider (sources) {
   const change$ = intent(sources.DOM)
   const state$ = model(change$, sources.props)
   const vtree$ = view(state$)
@@ -56,17 +56,22 @@ function main (sources) {
   }
 }
 
-// Effects (imperative)
-// ----
-const drivers = {
-  DOM: makeDOMDriver('#app'),
-  props: () => Rx.Observable.of({
+function main (sources) {
+  const props$ = Rx.Observable.of({
     label: 'Height',
     unit: 'cm',
     min: 140,
     max: 220,
     init: 170
   })
+
+  return LabeledSlider({ DOM: sources.DOM, props: props$ })
+}
+
+// Effects (imperative)
+// ----
+const drivers = {
+  DOM: makeDOMDriver('#app')
 }
 
 // Wiring
