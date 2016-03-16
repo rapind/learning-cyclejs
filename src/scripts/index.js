@@ -1,62 +1,73 @@
 import Rx from 'rx'
 import Cycle from '@cycle/core'
 import CycleDOM from '@cycle/dom'
-import CycleHTTPDriver from '@cycle/http'
 
 const { makeDOMDriver } = CycleDOM
-const { makeHTTPDriver } = CycleHTTPDriver
 
 // Logic (functional)
 // ----
 //
-// DOM read effect: button clicked
-// HTTP write effect: request sent
-// HTTP read effect: response received
-// DOM write effect: data displayed
+// DOM read effect: detect slider change
+// recalculate BMI
+// DOM write effect: display BMI
 function main (sources) {
-  const { div, button, h1, h4, a } = CycleDOM
+  const { div, input, label, h2 } = CycleDOM
 
-  const clickEvent$ = sources.DOM
-    .select('.get-first').events('click')
-
-  const url = 'http://jsonplaceholder.typicode.com/users/1'
-  const request$ = clickEvent$.map(() => {
-    return {
-      url: url,
-      method: 'GET'
-    }
-  })
-
-  const response$$ = sources.HTTP
-    .filter(response$ =>
-      response$.request.url === url
+  const changeWeight$ = sources.DOM
+    .select('.weight')
+    .events('input')
+    .map(ev =>
+      ev.target.value
     )
 
-  const response$ = response$$.switch()
-  const firstUser$ = response$.map(response =>
-    response.body
-  ).startWith(null)
+  const changeHeight$ = sources.DOM
+    .select('.height')
+    .events('input')
+    .map(ev =>
+      ev.target.value
+    )
+
+  const state$ = Rx.Observable.combineLatest(
+    changeWeight$.startWith(70),
+    changeHeight$.startWith(170),
+    (weight, height) => {
+      const heightMeters = height * 0.01
+      const bmi = Math.round(weight / (heightMeters * heightMeters))
+      return { weight, height, bmi }
+    }
+  )
 
   return {
-    DOM: firstUser$.map(firstUser =>
+    DOM: state$.map(state =>
       div([
-        button('.get-first', 'Get first user'),
-        firstUser == null ? null : div('.user-details', [
-          h1('.user-name', firstUser.name),
-          h4('.user-email', firstUser.email),
-          a('.user-website', { href: firstUser.website }, firstUser.website)
-        ])
+        div([
+          label(`Weight ${state.weight}kg`),
+          input('.weight', {
+            type: 'range',
+            min: 40,
+            max: 150,
+            value: state.weight
+          })
+        ]),
+        div([
+          label(`Height ${state.height}cm`),
+          input('.height', {
+            type: 'range',
+            min: 140,
+            max: 220,
+            value: state.height
+          })
+        ]),
+        h2(`BMI is ${state.bmi}`)
       ])
-    ),
-    HTTP: request$
+    )
   }
 }
 
 // Effects (imperative)
 // ----
 const drivers = {
-  DOM: makeDOMDriver('#app'),
-  HTTP: makeHTTPDriver()
+  DOM: makeDOMDriver('#app')
 }
 
 // Wiring
