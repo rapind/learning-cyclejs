@@ -3,31 +3,29 @@ import Cycle from '@cycle/core'
 import CycleDOM from '@cycle/dom'
 
 const { makeDOMDriver } = CycleDOM
+const { div, input, label, h2 } = CycleDOM
 
 // Logic (functional)
 // ----
 //
 // DOM read effect: detect slider change
+
 // recalculate BMI
 // DOM write effect: display BMI
-function main (sources) {
-  const { div, input, label, h2 } = CycleDOM
 
-  const changeWeight$ = sources.DOM
-    .select('.weight')
-    .events('input')
-    .map(ev =>
-      ev.target.value
-    )
+function intent (DOMSource) {
+  return {
+    changeWeight$: DOMSource.select('.weight')
+      .events('input')
+      .map(ev => ev.target.value),
+    changeHeight$: DOMSource.select('.height')
+      .events('input')
+      .map(ev => ev.target.value)
+  }
+}
 
-  const changeHeight$ = sources.DOM
-    .select('.height')
-    .events('input')
-    .map(ev =>
-      ev.target.value
-    )
-
-  const state$ = Rx.Observable.combineLatest(
+function model (changeWeight$, changeHeight$) {
+  return Rx.Observable.combineLatest(
     changeWeight$.startWith(70),
     changeHeight$.startWith(170),
     (weight, height) => {
@@ -36,31 +34,41 @@ function main (sources) {
       return { weight, height, bmi }
     }
   )
+}
+
+function view (state$) {
+  return state$.map(state =>
+    div([
+      div([
+        label(`Weight ${state.weight}kg`),
+        input('.weight', {
+          type: 'range',
+          min: 40,
+          max: 150,
+          value: state.weight
+        })
+      ]),
+      div([
+        label(`Height ${state.height}cm`),
+        input('.height', {
+          type: 'range',
+          min: 140,
+          max: 220,
+          value: state.height
+        })
+      ]),
+      h2(`BMI is ${state.bmi}`)
+    ])
+  )
+}
+
+function main (sources) {
+  const { changeWeight$, changeHeight$ } = intent(sources.DOM)
+  const state$ = model(changeWeight$, changeHeight$)
+  const vtree$ = view(state$)
 
   return {
-    DOM: state$.map(state =>
-      div([
-        div([
-          label(`Weight ${state.weight}kg`),
-          input('.weight', {
-            type: 'range',
-            min: 40,
-            max: 150,
-            value: state.weight
-          })
-        ]),
-        div([
-          label(`Height ${state.height}cm`),
-          input('.height', {
-            type: 'range',
-            min: 140,
-            max: 220,
-            value: state.height
-          })
-        ]),
-        h2(`BMI is ${state.bmi}`)
-      ])
-    )
+    DOM: vtree$
   }
 }
 
